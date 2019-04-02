@@ -47,7 +47,7 @@ class HDF5Dataset(Dataset):
 
     @staticmethod
     def get_slice_number(file_name):
-        with h5py.File(name=file_name, mode='r') as hf:
+        with h5py.File(name=file_name, mode='r', swmr=True) as hf:
             try:  # Train and Val
                 return hf['1'].shape[0]
             except KeyError:  # Test
@@ -55,7 +55,7 @@ class HDF5Dataset(Dataset):
 
     @staticmethod
     def h5_slice_parse_fn(file_name, slice_num, acc_fac):
-        with h5py.File(file_name, 'r', libver='latest') as hf:
+        with h5py.File(file_name, 'r', libver='latest', swmr=True) as hf:
             ds_slice_arr = np.asarray(hf[str(acc_fac)][slice_num])
             gt_slice_arr = np.asarray(hf['1'][slice_num])
             # Fat suppression ('CORPDFS_FBK', 'CORPD_FBK').
@@ -70,8 +70,7 @@ class HDF5Dataset(Dataset):
         return ds_slice_arr, gt_slice_arr, fat_supp
 
     # TODO: Must turn outputs into tensors. They are currently numpy arrays or python booleans.
-    def __getitem__(self, item):
-        file_name, slice_num, acc_fac = self.names_and_slices[item]
+    def __getitem__(self, idx):  # Need to add transforms.
+        file_name, slice_num, acc_fac = self.names_and_slices[idx]
         ds_slice, gt_slice, fat_supp = self.h5_slice_parse_fn(file_name, slice_num, acc_fac)
         return ds_slice, gt_slice, fat_supp  # Type is ndarray float32, ndarray float32, and python boolean respectively
-
